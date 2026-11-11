@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대학생 한 달 용돈 가계부 💜🌿</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        purple: {
+                            50: '#F5F3FF',
+                            100: '#EDE9FE',
+                            200: '#DDD6FE',
+                            500: '#8B5CF6',
+                            600: '#7C3AED',
+                            700: '#6D28D9',
+                            800: '#5B21B6',
+                            900: '#4C1D95',
+                        },
+                        mint: {
+                            50: '#F0FDFA',
+                            100: '#CCFBF1',
+                            200: '#99F6E4',
+                            400: '#2DD4BF',
+                            500: '#14B8A6',
+                            600: '#0D9488',
+                            700: '#0F766E',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F8FAFC;
+        }
+        /* Custom scrollbar for better visual appeal */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F1F5F9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen pb-12">
+
+    <!-- Header Navigation -->
+    <header class="bg-gradient-to-r from-purple-700 via-purple-600 to-mint-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl shadow-inner">
+                    🎓
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">캠퍼스 가계부</h1>
+                    <p class="text-xs text-purple-100 font-light">대학생을 위한 똑똑하고 감성적인 용돈 관리</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-xs backdrop-blur-sm border border-white/20">
+                <i class="far fa-calendar-alt text-mint-200"></i>
+                <input type="month" id="selectedMonth" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer" onchange="handleMonthChange()">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-5xl mx-auto px-4 pt-6 space-y-6">
+
+        <!-- Budget & Alert Banner Section -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Budget Overview Card -->
+            <div class="md:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-purple-50 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute right-20 -top-6 w-24 h-24 bg-mint-50 rounded-full blur-xl pointer-events-none"></div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm font-semibold text-slate-500 flex items-center gap-1.5">
+                            <i class="fas fa-wallet text-purple-500"></i> 이번 달 예산 현황
+                        </span>
+                        <button onclick="openBudgetModal()" class="text-xs text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-full transition font-medium">
+                            <i class="fas fa-cog mr-1"></i>예산 설정
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
+                        <div>
+                            <p class="text-xs text-slate-400 mb-1">한 달 예산</p>
+                            <p class="text-lg font-bold text-slate-700" id="displayBudget">0원</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400 mb-1">총 지출</p>
+                            <p class="text-lg font-bold text-purple-600" id="displaySpent">0원</p>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <p class="text-xs text-slate-400 mb-1">남은 용돈</p>
+                            <p class="text-xl font-black text-mint-600" id="displayRemaining">0원</p>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs font-medium">
+                            <span class="text-slate-500">예산 사용률</span>
+                            <span id="budgetPercentageText" class="text-purple-600 font-bold">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5">
+                            <div id="budgetProgressBar" class="bg-gradient-to-r from-mint-400 to-purple-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Recommended Spending -->
+                <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/80 -mx-6 -mb-6 p-4 px-6 rounded-b-3xl">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-full bg-mint-100 text-mint-700 flex items-center justify-center text-sm font-bold">
+                            💡
+                        </span>
+                        <div>
+                            <p class="text-xs text-slate-500">오늘부터 이번 달 말까지</p>
+                            <p class="text-xs sm:text-sm font-bold text-slate-700" id="dailyAllowanceText">하루 평균 <span class="text-purple-600">0원</span>까지 쓸 수 있어요</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-slate-400 bg-white px-2.5 py-1 rounded-md border border-slate-200" id="remainingDaysBadge">남은 날 0일</span>
+                </div>
+            </div>
+
+            <!-- Soft Alert Widget & Quick Stats -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-500 mb-3 flex items-center gap-1.5">
+                        <i class="fas fa-bell text-mint-500"></i> 스마트 알림
+                    </h2>
+                    
+                    <!-- Dynamic Alert Message -->
+                    <div id="alertWidget" class="p-4 rounded-2xl bg-mint-50 border border-mint-100 text-mint-800 transition-all duration-300">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl" id="alertEmoji">🌱</span>
+                            <div>
+                                <h3 class="font-bold text-sm" id="alertTitle">쾌적한 지출 상태</h3>
+                                <p class="text-xs mt-1 leading-relaxed text-slate-600" id="alertDesc">
+                                    아직 예산 여유가 충분해요! 계획적인 소비 생활을 응원합니다.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Tip / Mini Summary -->
+                <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
+                    <div class="flex justify-between items-center text-xs text-slate-500">
+                        <span>가장 지출이 많은 항목</span>
+                        <span id="topCategoryText" class="font-bold text-slate-700">-</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-slate-500">
+                        <span>이번 달 건수</span>
+                        <span id="totalCountText" class="font-bold text-slate-700">0건</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Form & Charts Grid -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Add Transaction Form Card -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-xs">
+                        <i class="fas fa-plus"></i>
+                    </span>
+                    지출 기록하기
+                </h2>
+
+                <form id="transactionForm" onsubmit="handleAddTransaction(event)" class="space-y-4">
+                    <!-- Date -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">날짜</label>
+                        <input type="date" id="inputDate" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm transition">
+                    </div>
+
+                    <!-- Amount -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">금액 (원)</label>
+                        <div class="relative">
+                            <input type="number" id="inputAmount" min="1" step="1" placeholder="예: 8500" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm transition pr-8">
+                            <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-medium">원</span>
+                        </div>
+                    </div>
+
+                    <!-- Category -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">카테고리</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="inputCategory" value="🍔 식비" checked class="peer hidden">
+                                <div class="px-2 py-2 rounded-xl border border-slate-200 text-center peer-checked:border-purple-600 peer-checked:bg-purple-50 peer-checked:text-purple-700 text-xs font-medium transition hover:bg-slate-50">
+                                    🍔 식비
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="inputCategory" value="🚌 교통" class="peer hidden">
+                                <div class="px-2 py-2 rounded-xl border border-slate-200 text-center peer-checked:border-purple-600 peer-checked:bg-purple-50 peer-checked:text-purple-700 text-xs font-medium transition hover:bg-slate-50">
+                                    🚌 교통
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="inputCategory" value="☕ 카페" class="peer hidden">
+                                <div class="px-2 py-2 rounded-xl border border-slate-200 text-center peer-checked:border-purple-600 peer-checked:bg-purple-50 peer-checked:text-purple-700 text-xs font-medium transition hover:bg-slate-50">
+                                    ☕ 카페
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="inputCategory" value="🎮 여가" class="peer hidden">
+                                <div class="px-2 py-2 rounded-xl border border-slate-200 text-center peer-checked:border-purple-600 peer-checked:bg-purple-50 peer-checked:text-purple-700 text-xs font-medium transition hover:bg-slate-50">
+                                    🎮 여가
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="inputCategory" value="📚 학업" class="peer hidden">
+                                <div class="px-2 py-2 rounded-xl border border-slate-200 text-center peer-checked:border-purple-600 peer-checked:bg-purple-50 peer-checked:text-purple-700 text-xs font-medium transition hover:bg-slate-50">
+                                    📚 학업
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="inputCategory" value="💡 기타" class="peer hidden">
+                                <div class="px-2 py-2 rounded-xl border border-slate-200 text-center peer-checked:border-purple-600 peer-checked:bg-purple-50 peer-checked:text-purple-700 text-xs font-medium transition hover:bg-slate-50">
+                                    💡 기타
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Memo -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">메모 (선택)</label>
+                        <input type="text" id="inputMemo" placeholder="예: 학식 돈까스, 전공 서적 등" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm transition">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-mint-600 hover:from-purple-700 hover:to-mint-700 text-white font-semibold py-3 rounded-xl shadow-md shadow-purple-200 transition duration-200 flex items-center justify-center gap-2 text-sm mt-2">
+                        <i class="fas fa-check"></i> 저장하기
+                    </button>
+                </form>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Doughnut Chart: Category Ratio -->
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                                <i class="fas fa-chart-pie text-purple-500"></i> 항목별 지출 비율
+                            </h3>
+                        </div>
+                        <div class="relative w-full aspect-square max-h-[220px] mx-auto flex items-center justify-center">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Bar Chart: Daily Trend -->
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                                <i class="fas fa-chart-bar text-mint-500"></i> 일자별 지출 추이
+                            </h3>
+                        </div>
+                        <div class="relative w-full aspect-square max-h-[220px] mx-auto flex items-center justify-center">
+                            <canvas id="dailyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction History Card -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-mint-100 text-mint-700 flex items-center justify-center text-xs">
+                                <i class="fas fa-list"></i>
+                            </span>
+                            지출 내역 목록
+                        </h3>
+
+                        <!-- Filter Controls -->
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <select id="filterCategory" onchange="renderApp()" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-purple-500 text-slate-600">
+                                <option value="ALL">전체 카테고리</option>
+                                <option value="🍔 식비">🍔 식비</option>
+                                <option value="🚌 교통">🚌 교통</option>
+                                <option value="☕ 카페">☕ 카페</option>
+                                <option value="🎮 여가">🎮 여가</option>
+                                <option value="📚 학업">📚 학업</option>
+                                <option value="💡 기타">💡 기타</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- History List Container -->
+                    <div class="overflow-y-auto max-h-[280px] pr-1 space-y-2.5" id="transactionList">
+                        <!-- Items rendered via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Budget Setting Modal -->
+    <div id="budgetModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 transform transition-all">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-coins text-purple-600"></i> 한 달 예산 설정
+                </h3>
+                <button onclick="closeBudgetModal()" class="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4">
+                이번 달 목표 예산을 입력해 주세요. 남은 일수에 맞춰 하루 권장 사용 금액을 계산해 드립니다.
+            </p>
+            <div class="mb-5">
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5">목표 예산 금액</label>
+                <div class="relative">
+                    <input type="number" id="modalBudgetInput" min="0" step="10000" placeholder="예: 500000" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-base font-semibold text-slate-800 pr-10">
+                    <span class="absolute right-4 top-3.5 text-sm text-slate-400 font-medium">원</span>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeBudgetModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-medium hover:bg-slate-50">취소</button>
+                <button onclick="saveBudget()" class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-md shadow-purple-200">저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script Logic -->
+    <script>
+        // State Management
+        let budget = 450000; // Default budget: 450,000 KRW
+        let transactions = [];
+        let categoryChart = null;
+        let dailyChart = null;
+
+        // Sample Data Initialization
+        const SAMPLE_DATA = [
+            { id: '1', date: getFormattedDate(0), amount: 8500, category: '🍔 식비', memo: '학생식당 돈까스' },
+            { id: '2', date: getFormattedDate(0), amount: 4500, category: '☕ 카페', memo: '시험기간 아메리카노' },
+            { id: '3', date: getFormattedDate(-1), amount: 1500, category: '🚌 교통', memo: '지하철 이동' },
+            { id: '4', date: getFormattedDate(-2), amount: 32000, category: '📚 학업', memo: '전공교재 중고' },
+            { id: '5', date: getFormattedDate(-3), amount: 14000, category: '🎮 여가', memo: '친구들이랑 코노&오락실' },
+            { id: '6', date: getFormattedDate(-4), amount: 12000, category: '🍔 식비', memo: '마라탕 점심' },
+            { id: '7', date: getFormattedDate(-5), amount: 4800, category: '☕ 카페', memo: '딸기 라떼' }
+        ];
+
+        function getFormattedDate(offsetDays) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Initialize App
+        window.onload = function() {
+            // Set current month in input
+            const today = new Date();
+            const yearMonth = today.toISOString().slice(0, 7);
+            document.getElementById('selectedMonth').value = yearMonth;
+            document.getElementById('inputDate').value = today.toISOString().slice(0, 10);
+
+            // Load data from LocalStorage
+            loadStorageData();
+
+            // Render Application Components
+            renderApp();
+        };
+
+        // LocalStorage Helpers
+        function loadStorageData() {
+            const storedBudget = localStorage.getItem('campus_ledger_budget');
+            const storedTransactions = localStorage.getItem('campus_ledger_transactions');
+
+            if (storedBudget !== null) {
+                budget = parseInt(storedBudget, 10);
+            }
+
+            if (storedTransactions !== null) {
+                try {
+                    transactions = JSON.parse(storedTransactions);
+                } catch (e) {
+                    transactions = SAMPLE_DATA;
+                }
+            } else {
+                // First time load - set sample data
+                transactions = SAMPLE_DATA;
+                saveStorageData();
+            }
+        }
+
+        function saveStorageData() {
+            localStorage.setItem('campus_ledger_budget', budget);
+            localStorage.setItem('campus_ledger_transactions', JSON.stringify(transactions));
+        }
+
+        // Handling Month Selection
+        function handleMonthChange() {
+            renderApp();
+        }
+
+        // Get Filtered Transactions by Selected Month & Category
+        function getFilteredTransactions() {
+            const selectedMonth = document.getElementById('selectedMonth').value; // YYYY-MM
+            const selectedCategory = document.getElementById('filterCategory').value;
+
+            return transactions.filter(t => {
+                const matchMonth = t.date.startsWith(selectedMonth);
+                const matchCategory = selectedCategory === 'ALL' || t.category === selectedCategory;
+                return matchMonth && matchCategory;
+            });
+        }
+
+        function getMonthAllTransactions() {
+            const selectedMonth = document.getElementById('selectedMonth').value;
+            return transactions.filter(t => t.date.startsWith(selectedMonth));
+        }
+
+        // Add Transaction Handler
+        function handleAddTransaction(event) {
+            event.preventDefault();
+
+            const date = document.getElementById('inputDate').value;
+            const amount = parseInt(document.getElementById('inputAmount').value, 10);
+            const categoryEl = document.querySelector('input[name="inputCategory"]:checked');
+            const category = categoryEl ? categoryEl.value : '💡 기타';
+            const memo = document.getElementById('inputMemo').value.trim();
+
+            if (!date || isNaN(amount) || amount <= 0) return;
+
+            const newTransaction = {
+                id: Date.now().toString(),
+                date,
+                amount,
+                category,
+                memo: memo || category.split(' ')[1] || '지출'
+            };
+
+            transactions.unshift(newTransaction);
+            saveStorageData();
+
+            // Clear inputs
+            document.getElementById('inputAmount').value = '';
+            document.getElementById('inputMemo').value = '';
+
+            // Update month filter if added to another month
+            const addedMonth = date.slice(0, 7);
+            document.getElementById('selectedMonth').value = addedMonth;
+
+            renderApp();
+        }
+
+        // Delete Transaction Handler
+        function deleteTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            saveStorageData();
+            renderApp();
+        }
+
+        // Modal Controls
+        function openBudgetModal() {
+            document.getElementById('modalBudgetInput').value = budget;
+            document.getElementById('budgetModal').classList.remove('hidden');
+        }
+
+        function closeBudgetModal() {
+            document.getElementById('budgetModal').classList.add('hidden');
+        }
+
+        function saveBudget() {
+            const val = parseInt(document.getElementById('modalBudgetInput').value, 10);
+            if (!isNaN(val) && val >= 0) {
+                budget = val;
+                saveStorageData();
+                closeBudgetModal();
+                renderApp();
+            }
+        }
+
+        // Main Render Function
+        function renderApp() {
+            const currentMonthAll = getMonthAllTransactions();
+            const filteredList = getFilteredTransactions();
+
+            // 1. Calculate Summary Values
+            const totalSpent = currentMonthAll.reduce((acc, cur) => acc + cur.amount, 0);
+            const remaining = budget - totalSpent;
+            const usagePercent = budget > 0 ? Math.min(Math.round((totalSpent / budget) * 100), 999) : 0;
+
+            // Render Budget Overview Cards
+            document.getElementById('displayBudget').innerText = budget.toLocaleString() + '원';
+            document.getElementById('displaySpent').innerText = totalSpent.toLocaleString() + '원';
+            
+            const remainingEl = document.getElementById('displayRemaining');
+            remainingEl.innerText = remaining.toLocaleString() + '원';
+            if (remaining < 0) {
+                remainingEl.className = "text-xl font-black text-rose-500";
+            } else {
+                remainingEl.className = "text-xl font-black text-mint-600";
+            }
+
+            // Progress Bar
+            document.getElementById('budgetPercentageText').innerText = usagePercent + '%';
+            const progressBar = document.getElementById('budgetProgressBar');
+            progressBar.style.width = Math.min(usagePercent, 100) + '%';
+            
+            if (usagePercent >= 80) {
+                progressBar.className = "bg-gradient-to-r from-purple-500 to-rose-500 h-full rounded-full transition-all duration-500";
+            } else {
+                progressBar.className = "bg-gradient-to-r from-mint-400 to-purple-600 h-full rounded-full transition-all duration-500";
+            }
+
+            // 2. Calculate Daily Allowance
+            calculateDailyAllowance(remaining);
+
+            // 3. Render Warning / Alert Widget
+            renderAlertWidget(usagePercent, remaining);
+
+            // 4. Update Quick Stats
+            updateQuickStats(currentMonthAll);
+
+            // 5. Render Transaction History List
+            renderTransactionList(filteredList);
+
+            // 6. Update Visual Charts
+            renderCharts(currentMonthAll);
+        }
+
+        // Calculate Daily Recommended Spending
+        function calculateDailyAllowance(remainingAmount) {
+            const selectedMonthStr = document.getElementById('selectedMonth').value; // YYYY-MM
+            const [yearStr, monthStr] = selectedMonthStr.split('-');
+            const year = parseInt(yearStr, 10);
+            const month = parseInt(monthStr, 10);
+
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth() + 1;
+            const currentDate = today.getDate();
+
+            const totalDaysInMonth = new Date(year, month, 0).getDate();
+            let remainingDays = 0;
+
+            if (year > currentYear || (year === currentYear && month > currentMonth)) {
+                // Future Month
+                remainingDays = totalDaysInMonth;
+            } else if (year === currentYear && month === currentMonth) {
+                // Current Month
+                remainingDays = (totalDaysInMonth - currentDate) + 1; // Including today
+            } else {
+                // Past Month
+                remainingDays = 0;
+            }
+
+            document.getElementById('remainingDaysBadge').innerText = `남은 날 ${remainingDays}일`;
+
+            const dailyTextEl = document.getElementById('dailyAllowanceText');
+            if (remainingDays <= 0) {
+                dailyTextEl.innerHTML = `이번 달은 마감되었습니다.`;
+            } else if (remainingAmount <= 0) {
+                dailyTextEl.innerHTML = `<span class="text-rose-500 font-bold">예산 소진! 하루 권장 금액 0원</span>`;
+            } else {
+                const dailyAvg = Math.floor(remainingAmount / remainingDays);
+                dailyTextEl.innerHTML = `하루 평균 <span class="text-purple-600 font-bold">${dailyAvg.toLocaleString()}원</span>까지 쓸 수 있어요`;
+            }
+        }
+
+        // Render Warning & Smart Alert Banner
+        function renderAlertWidget(percent, remaining) {
+            const widget = document.getElementById('alertWidget');
+            const emoji = document.getElementById('alertEmoji');
+            const title = document.getElementById('alertTitle');
+            const desc = document.getElementById('alertDesc');
+
+            if (percent >= 100) {
+                widget.className = "p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-800 transition-all duration-300";
+                emoji.innerText = "🚨";
+                title.innerText = "예산 초과 경고!";
+                desc.innerText = "설정한 한 달 용돈을 모두 사용했어요. 남은 기간 초절약 모드가 필요해요!";
+            } else if (percent >= 80) {
+                widget.className = "p-4 rounded-2xl bg-purple-50 border border-purple-200 text-purple-900 transition-all duration-300 shadow-sm";
+                emoji.innerText = "💜";
+                title.innerText = "예산의 80% 이상을 사용했어요!";
+                desc.innerText = "용돈 잔액이 얼마 남지 않았어요. 남은 날 동안 조금만 더 아껴보아요 🌿";
+            } else if (percent >= 50) {
+                widget.className = "p-4 rounded-2xl bg-amber-50 border border-amber-100 text-amber-800 transition-all duration-300";
+                emoji.innerText = "⚖️";
+                title.innerText = "절반 돌파, 순항 중";
+                desc.innerText = "예산의 절반을 사용했습니다. 계획한 소비 흐름을 유지해 보세요!";
+            } else {
+                widget.className = "p-4 rounded-2xl bg-mint-50 border border-mint-100 text-mint-800 transition-all duration-300";
+                emoji.innerText = "🌱";
+                title.innerText = "쾌적한 지출 상태";
+                desc.innerText = "아직 예산 여유가 충분해요! 지혜로운 대학생 소비 라이프를 지원합니다.";
+            }
+        }
+
+        // Update Quick Statistics
+        function updateQuickStats(monthList) {
+            document.getElementById('totalCountText').innerText = `${monthList.length}건`;
+
+            if (monthList.length === 0) {
+                document.getElementById('topCategoryText').innerText = '-';
+                return;
+            }
+
+            const catTotals = {};
+            monthList.forEach(item => {
+                catTotals[item.category] = (catTotals[item.category] || 0) + item.amount;
+            });
+
+            let topCat = '-';
+            let maxAmt = 0;
+            for (const [cat, amt] of Object.entries(catTotals)) {
+                if (amt > maxAmt) {
+                    maxAmt = amt;
+                    topCat = cat;
+                }
+            }
+            document.getElementById('topCategoryText').innerText = topCat;
+        }
+
+        // Render Transaction List UI
+        function renderTransactionList(list) {
+            const container = document.getElementById('transactionList');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="py-10 text-center text-slate-400 text-xs">
+                        <i class="far fa-folder-open text-2xl mb-2 text-slate-300 block"></i>
+                        지출 내역이 없습니다.
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort newest first
+            const sorted = [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            sorted.forEach(item => {
+                const el = document.createElement('div');
+                el.className = "flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-purple-50/50 transition border border-slate-100 group";
+                el.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-white shadow-xs border border-slate-100 flex items-center justify-center text-base">
+                            ${item.category.split(' ')[0]}
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-800">${escapeHtml(item.memo)}</p>
+                            <p class="text-[11px] text-slate-400 font-light">${item.date} · ${item.category.split(' ')[1] || item.category}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-purple-700">-${item.amount.toLocaleString()}원</span>
+                        <button onclick="deleteTransaction('${item.id}')" class="text-slate-300 hover:text-rose-500 opacity-80 group-hover:opacity-100 transition p-1">
+                            <i class="far fa-trash-alt text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        // Escape HTML for XSS Safety
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+
+        // Render Doughnut & Bar Charts
+        function renderCharts(monthTransactions) {
+            const categories = ['🍔 식비', '🚌 교통', '☕ 카페', '🎮 여가', '📚 학업', '💡 기타'];
+            const categoryColors = ['#8B5CF6', '#2DD4BF', '#F59E0B', '#EC4899', '#3B82F6', '#94A3B8'];
+            
+            // 1. Prepare Category Totals
+            const catAmounts = categories.map(cat => {
+                return monthTransactions
+                    .filter(t => t.category === cat)
+                    .reduce((sum, t) => sum + t.amount, 0);
+            });
+
+            // Category Doughnut Chart
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChart) categoryChart.destroy();
+
+            categoryChart = new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: catAmounts,
+                        backgroundColor: categoryColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 10, family: 'Noto Sans KR' },
+                                boxWidth: 10,
+                                padding: 8
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw || 0;
+                                    return ` ${context.label}: ${val.toLocaleString()}원`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+
+            // 2. Prepare Daily Totals
+            const selectedMonthStr = document.getElementById('selectedMonth').value; // YYYY-MM
+            const [yearStr, monthStr] = selectedMonthStr.split('-');
+            const year = parseInt(yearStr, 10);
+            const month = parseInt(monthStr, 10);
+            const daysInMonth = new Date(year, month, 0).getDate();
+
+            const daysLabels = [];
+            const dailyAmounts = [];
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dayString = `${selectedMonthStr}-${String(d).padStart(2, '0')}`;
+                daysLabels.push(`${d}일`);
+                
+                const sumForDay = monthTransactions
+                    .filter(t => t.date === dayString)
+                    .reduce((acc, cur) => acc + cur.amount, 0);
+                dailyAmounts.push(sumForDay);
+            }
+
+            // Daily Bar Chart
+            const ctxDaily = document.getElementById('dailyChart').getContext('2d');
+            if (dailyChart) dailyChart.destroy();
+
+            dailyChart = new Chart(ctxDaily, {
+                type: 'bar',
+                data: {
+                    labels: daysLabels,
+                    datasets: [{
+                        label: '지출액',
+                        data: dailyAmounts,
+                        backgroundColor: '#7C3AED',
+                        borderRadius: 4,
+                        hoverBackgroundColor: '#2DD4BF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }
+                        },
+                        y: {
+                            grid: { color: '#F1F5F9' },
+                            ticks: {
+                                font: { size: 9 },
+                                callback: function(value) {
+                                    if (value >= 10000) return (value / 10000) + '만';
+                                    return value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` 지출: ${context.raw.toLocaleString()}원`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
